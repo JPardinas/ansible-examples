@@ -1,0 +1,14 @@
+---
+- name: Install node and npm
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - nodejs
+    - npm
+
+- name: Install Forever
+  npm:
+    name: forever
+    global: yes
+    state: present

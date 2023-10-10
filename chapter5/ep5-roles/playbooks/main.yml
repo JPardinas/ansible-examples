@@ -1,0 +1,39 @@
+---
+- name: Install NodeJS in ubuntu
+  hosts: all
+  become: true
+
+  vars:
+    node_apps_location: /usr/local/opt/node
+
+  roles:
+    - nodejs
+
+  tasks:
+    - name: Ensure nodeJS app folder exists
+      file:
+        path: "{{ node_apps_location }}"
+        state: directory
+
+    - name: Copy example.js to node_apps_location
+      # ignore node_modules folder
+      copy:
+        src: ../app
+        dest: "{{ node_apps_location }}"
+        owner: root
+        group: root
+        mode: 0755
+        exclude: node_modules
+
+    - name: Install app dependencies
+      npm:
+        path: "{{ node_apps_location }}/app"
+    
+    - name: Check list of forever processes
+      command: forever list
+      register: forever_list
+      changed_when: false
+
+    - name: Start forever process
+      command: forever start "{{ node_apps_location }}/app/index.js"
+      when: forever_list.stdout.find('index.js') == -1
