@@ -1,0 +1,47 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+
+Vagrant.configure("2") do |config|
+  # define bridge constant
+
+  config.vm.box = "roboxes/ubuntu2210"
+  config.ssh.insert_key = false
+  config.vm.synced_folder ".", "/vagrant", type: "smb", smb_username: "jpard"
+  # config.vm.network "public_network", bridge: "InternalSwitch"
+
+
+  config.vm.provider "hyperv" do |h|
+    h.memory = 2048
+    h.cpus = 2
+  end
+
+  # update and install ifconfig
+  config.vm.provision "shell", privileged: true, inline: <<-SHELL
+    apt-get update
+    apt install net-tools -y
+  SHELL
+
+
+  # nodejs
+  config.vm.define vm_name_app1 = "ansible-chapter5-nodejs" do |ansible_chapter5_nodejs|
+    ansible_chapter5_nodejs.vm.hostname = "#{vm_name_app1}.test"
+    ansible_chapter5_nodejs.vm.network "private_network", ip: "192.168.137.5", bridge: "InternalSwitch"
+
+    ansible_chapter5_nodejs.vm.provider "hyperv" do |h|
+      h.vmname = vm_name_app1
+    end
+
+    # because private ip does not work using vm.network, we need to use shell provisioner
+    # ansible_chapter3_app1.vm.provision "shell", privileged: true, path: "scripts/change-ip-and-restart.sh", args: ["192.168.60.4", "255.255.255.0"]
+
+    ansible_chapter5_nodejs.vm.provision "shell", privileged: true, path: "scripts/get-ip-and-replace.sh", args: ["ansible_chapter5_nodejs", "/vagrant/inventory"]
+  end
+  
+  config.vm.provision "shell", privileged: true, path: "scripts/inject-ssh-key.sh"
+
+  # Execute under ansible controller instance indeed
+  # # ansible provisioner
+  # config.vm.provision "ansible_local" do |ansible|
+  # end
+end

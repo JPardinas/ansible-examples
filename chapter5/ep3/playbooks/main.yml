@@ -14,3 +14,17 @@
 
   tasks:
     - import_tasks: ../tasks/apache.yml
+      # vars:
+      #   apache_package: test
+
+
+
+    # - include_tasks: ../tasks/log.yml
+    # - name: check for existing log files in dynamic log_files_path variable
+    #   find:
+    #     paths: "{{ item }}"
+    #     patterns: "*.log"
+    #   register: found_log_file_paths
+    #   with_items: "{{ log_files_path }}"
+
+- import_playbook: ./date.yml

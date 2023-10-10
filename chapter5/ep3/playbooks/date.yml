@@ -1,0 +1,9 @@
+---
+- name: Print date
+  hosts: all
+  become: false
+
+  tasks:
+    - name: Print date
+      command: date
+      register: date_output
