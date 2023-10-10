@@ -1,0 +1,14 @@
+---
+- name: Install Apache
+  hosts: all
+  become: true
+  tasks:
+
+    - name: Install Apache
+      command: apt install apache2 -y
+
+    - name: Copy configuration files
+      command: >
+        cp /vagrant/config/apache2.conf /etc/apache2/apache2.conf
+    - command: >
+        cp /vagrant/config/ports.conf /etc/apache2/ports.conf

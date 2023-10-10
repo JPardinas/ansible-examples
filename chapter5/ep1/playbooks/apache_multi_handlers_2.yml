@@ -1,0 +1,43 @@
+---
+- name: Install Apache Ubuntu
+  hosts: apache
+  become: true
+
+  pre_tasks:
+    - name: Update apt cache if needed.
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+  handlers:
+    - name: restart apache
+      service:
+        name: apache2
+        state: restarted
+      notify: restart memcached
+
+    - name: restart memcached
+      service:
+        name: memcached
+        state: restarted
+
+  tasks:
+    - name: Ensure Apache is installed
+      apt:
+        name: apache2
+        state: present
+
+    - name: Copy test config file
+      copy:
+        src: ../files/test.conf
+        dest: /etc/apache2/sites-available/test.conf
+      notify: restart apache
+
+    - name: Make sure handlers are flushed inmediately
+      meta: flush_handlers
+
+    - name: Ensure Apache is running and enabled
+      service:
+        name: apache2
+        state: started
+        enabled: yes

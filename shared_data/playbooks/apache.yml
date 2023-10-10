@@ -1,0 +1,61 @@
+---
+- name: Install Apache Ubuntu
+  hosts: apache
+  become: true
+
+  pre_tasks:
+    - name: Update apt cache if needed.
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+  environment: # these are not persistent in the remote host
+    test: foo
+
+  vars:
+    proxy_vars:
+      http_proxy: http://proxy.example.com:8080
+      https_proxy: http://proxy.example.com:8080
+
+  handlers:
+    - name: restart apache
+      service:
+        name: apache2
+        state: restarted
+
+  tasks:
+    - name: Add an environment variable to the user shell
+      lineinfile:
+        dest: ~/.bashrc
+        regexp: '^TEST_VAR='
+        line: 'TEST_VAR=foo'
+      notify: restart apache
+      become: false
+      environment: "{{ proxy_vars }}"
+
+    - name: Get the value of an environment variable
+      shell: '. ~/.bashrc && echo $TEST_VAR'
+      register: foo
+      become: false
+
+    - debug: msg="The value of TEST_VAR is {{ foo.stdout }}"
+
+    - name: Ensure Apache is installed
+      apt:
+        name: apache2
+        state: present
+
+    - name: Copy test config file
+      copy:
+        src: ../files/test.conf
+        dest: /etc/apache2/sites-available/test.conf
+      notify: restart apache
+
+    - name: Make sure handlers are flushed inmediately
+      meta: flush_handlers
+
+    - name: Ensure Apache is running and enabled
+      service:
+        name: apache2
+        state: started
+        enabled: yes

@@ -1,0 +1,104 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+
+Vagrant.configure("2") do |config|
+  # define bridge constant
+
+  config.vm.box = "roboxes/ubuntu2210"
+  config.ssh.insert_key = false
+  config.vm.synced_folder ".", "/vagrant", type: "smb", smb_username: "jpard"
+  # config.vm.network "public_network", bridge: "InternalSwitch"
+
+
+  config.vm.provider "hyperv" do |h|
+    h.memory = 2048
+    h.cpus = 2
+  end
+
+  # update and install ifconfig
+  config.vm.provision "shell", privileged: true, inline: <<-SHELL
+    apt-get update
+    apt install net-tools -y
+  SHELL
+
+
+
+  
+  # Ansible controller
+  config.vm.define vm_name_controller = "ansible-chapter3-controller" do |ansible_chapter3_controller|
+    ansible_chapter3_controller.vm.hostname = "#{vm_name_controller}.test"
+    ansible_chapter3_controller.vm.network "private_network", ip: "192.168.137.4", bridge: "InternalSwitch"
+
+    ansible_chapter3_controller.vm.provider "hyperv" do |h|
+      h.vmname = vm_name_controller
+    end
+
+     # install pip3
+     ansible_chapter3_controller.vm.provision "shell", privileged: true, inline: <<-SHELL
+      apt-get update
+      apt-get install -y python3-pip
+    SHELL
+
+
+    ansible_chapter3_controller.vm.provision "shell", privileged: false, inline: <<-SHELL
+      pip3 install --upgrade pip
+    SHELL
+
+    # install ansible
+    ansible_chapter3_controller.vm.provision "shell", privileged: false, inline: <<-SHELL
+      pip3 install ansible
+    SHELL
+
+  end
+  
+
+  # App1
+  config.vm.define vm_name_app1 = "ansible-chapter3-app1" do |ansible_chapter3_app1|
+    ansible_chapter3_app1.vm.hostname = "#{vm_name_app1}.test"
+    ansible_chapter3_app1.vm.network "private_network", ip: "192.168.137.5", bridge: "InternalSwitch"
+
+    ansible_chapter3_app1.vm.provider "hyperv" do |h|
+      h.vmname = vm_name_app1
+    end
+
+    # because private ip does not work using vm.network, we need to use shell provisioner
+    # ansible_chapter3_app1.vm.provision "shell", privileged: true, path: "scripts/change-ip-and-restart.sh", args: ["192.168.60.4", "255.255.255.0"]
+
+    ansible_chapter3_app1.vm.provision "shell", privileged: true, path: "scripts/get-ip-and-replace.sh", args: ["ansible-chapter3-app1-ip", "/vagrant/inventory"]
+  end
+
+  # App2
+  config.vm.define vm_name_app2 = "ansible-chapter3-app2" do |ansible_chapter3_app2|
+    ansible_chapter3_app2.vm.hostname = "#{vm_name_app2}.test"
+    ansible_chapter3_app2.vm.network "private_network", ip: "192.168.137.6", bridge: "InternalSwitch"
+
+    ansible_chapter3_app2.vm.provider "hyperv" do |h|
+      h.vmname = vm_name_app2
+    end
+
+    # because private ip does not work using vm.network, we need to use shell provisioner
+    # ansible_chapter3_app2.vm.provision "shell", privileged: true, path: "scripts/change-ip-and-restart.sh", args: ["192.168.60.5", "255.255.255.0"]
+
+    ansible_chapter3_app2.vm.provision "shell", privileged: true, path: "scripts/get-ip-and-replace.sh", args: ["ansible-chapter3-app2-ip", "/vagrant/inventory"]
+  end
+
+  # db
+  config.vm.define vm_name_db = "ansible-chapter3-db" do |ansible_chapter3_db|
+    ansible_chapter3_db.vm.hostname = "#{vm_name_db}.test"
+    ansible_chapter3_db.vm.network "private_network", ip: "192.168.137.7", bridge: "InternalSwitch"
+
+    ansible_chapter3_db.vm.provider "hyperv" do |h|
+      h.vmname = vm_name_db
+    end
+
+    # because private ip does not work using vm.network, we need to use shell provisioner
+    # ansible_chapter3_db.vm.provision "shell", privileged: true, path: "scripts/change-ip-and-restart.sh", args: ["192.168.60.6", "255.255.255.0"]
+    ansible_chapter3_db.vm.provision "shell", privileged: true, path: "scripts/get-ip-and-replace.sh", args: ["ansible-chapter3-db-ip", "/vagrant/inventory"]
+  end
+
+
+
+  config.vm.provision "shell", privileged: true, path: "scripts/inject-ssh-key.sh"
+  
+end

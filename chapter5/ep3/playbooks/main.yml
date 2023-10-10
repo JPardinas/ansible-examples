@@ -1,0 +1,16 @@
+---
+- name: Install Apache Ubuntu
+  hosts: apache
+  become: true
+
+  pre_tasks:
+    - name: Update apt cache if needed.
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+  handlers:
+    - import_tasks: ../handlers/apache.yml
+
+  tasks:
+    - import_tasks: ../tasks/apache.yml

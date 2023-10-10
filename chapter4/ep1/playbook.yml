@@ -1,0 +1,29 @@
+---
+- name: Install Apache
+  hosts: all
+  become: true
+  tasks:
+
+    - name: Install Apache
+      apt:
+        name: apache2
+        state: present
+
+    - name: Copy configuration files
+      copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        owner: root
+        group: root
+        mode: 0644
+      with_items:
+        - src: /vagrant/config/apache2.conf
+          dest: /etc/apache2/apache2.conf
+        - src: /vagrant/config/ports.conf
+          dest: /etc/apache2/ports.conf
+
+    - name: Ensure Apache is running now and at boot
+      service:
+        name: apache2
+        state: started
+        enabled: true

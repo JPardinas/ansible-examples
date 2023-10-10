@@ -1,0 +1,63 @@
+---
+- hosts: solr
+  become: true
+  
+  vars_files:
+    - vars.yml
+
+  pre_tasks:
+    - name: Update apt cache if needed.
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+    
+  handlers:
+    - name: restart solr
+      service:
+        name: solr
+        state: restarted
+  
+  tasks:
+    # - name: Change config.
+    #   command: something to change config
+    #   notify: restart solr
+
+    - name: Install Java
+      apt:
+        name: openjdk-11-jdk
+        state: present
+
+    - name: Download Solr
+      get_url:
+        url: "https://www.apache.org/dyn/closer.lua/lucene/solr/{{ solr_version }}/solr-{{ solr_version }}.tgz?action=download"
+        dest: "{{ download_dir }}/solr-{{ solr_version }}.tgz"
+        checksum: "{{ solr_checksum }}"
+        mode: 0644
+    
+    - name: Expand Solr
+      unarchive:
+        src: "{{ download_dir }}/solr-{{ solr_version }}.tgz"
+        dest: "{{ solr_dir }}"
+        remote_src: yes
+        creates: "{{ solr_dir }}"
+        extra_opts: [--strip-components=1]
+        mode: 0755
+        # create dest dir if it doesn't exist
+    
+    - name: Run Solr install script
+      command: >
+        {{ solr_dir }}/bin/install_solr_service.sh {{ download_dir }}/solr-{{ solr_version }}.tgz
+        -i /opt
+        -d /var/solr
+        -u solr
+        -s solr
+        -p 8983
+      args:
+        creates: "{{ solr_dir }}/bin/solr"
+      notify: restart solr
+
+    - name: Ensure solr is started and enabled at boot
+      service:
+        name: solr
+        state: started
+        enabled: yes

@@ -1,0 +1,18 @@
+# Application servers
+[app]
+ansible-chapter3-app1-ip
+ansible-chapter3-app2-ip
+
+# Database servers
+[db]
+ansible-chapter3-db-ip
+
+# Group 'multi' with all servers
+[multi:children]
+app
+db
+
+# Variables for all servers
+[multi:vars]
+ansible_ssh_user=vagrant
+ansible_ssh_private_key_file=/home/vagrant/.ssh/id_rsa

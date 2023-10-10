@@ -1,0 +1,26 @@
+---
+- name: Test API KEY
+  hosts: localhost
+  gather_facts: false
+
+  vars_files:
+    - ../vars/api_key.yml
+
+
+  tasks:
+    - name: Echo the API key which was injected into the env.
+      shell: echo $API_KEY
+      register: echo_result
+      environment: 
+        API_KEY: "{{ myapp_api_key }}"
+      tags: 
+        - api_key
+        - echo
+      # ignore_errors: true
+      # when: myapp_api_key is defined
+      # changed_when: false
+      # failed_when: false
+
+    - name: Show the result.
+      debug: var=echo_result.stdout
+    

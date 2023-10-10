@@ -1,0 +1,23 @@
+# multi os playbook, centos and ubuntu
+---
+- name: Install and configure NTP on all servers
+  hosts: all
+  become: yes
+  tasks:
+    - name: Ensure NTP is installed
+      yum:
+        name: ntp
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Ensure NTP is installed
+      apt:
+        name: ntp
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Ensure NTP is running
+      service:
+        name: ntp
+        state: started
+        enabled: yes

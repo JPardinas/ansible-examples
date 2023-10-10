@@ -1,0 +1,48 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+
+  config.vm.box = "roboxes/ubuntu2210"
+  config.ssh.insert_key = false
+  config.vm.synced_folder "../shared_data", "/vagrant", type: "smb", smb_username: "jpard"
+
+  config.vm.provider "hyperv" do |h|
+    h.memory = 2048
+    h.cpus = 2
+  end
+
+  config.vm.define vm_name = "ansible-master" do |ansible_master|
+    ansible_master.vm.hostname = "#{vm_name}.test"
+    ansible_master.vm.network "private_network", ip: "192.168.60.3", bridge: "InternalSwitch"
+
+    ansible_master.vm.provider "hyperv" do |h|
+      h.vmname = vm_name
+    end
+  end
+
+  
+  # update and install ifconfig
+  config.vm.provision "shell", privileged: true, inline: <<-SHELL
+    apt-get update
+    apt install net-tools -y
+  SHELL
+
+  # install pip3
+  config.vm.provision "shell", privileged: true, inline: <<-SHELL
+    apt-get install -y python3-pip
+  SHELL
+
+
+  config.vm.provision "shell", privileged: false, inline: <<-SHELL
+    pip3 install --upgrade pip
+  SHELL
+
+  # install ansible
+  config.vm.provision "shell", privileged: false, inline: <<-SHELL
+    pip3 install ansible
+  SHELL
+
+  config.vm.provision "shell", privileged: true, path: "../shared_data/scripts/inject-ssh-key.sh", args: ["true"]
+
+end
