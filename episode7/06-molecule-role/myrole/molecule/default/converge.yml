@@ -1,0 +1,16 @@
+---
+- name: Converge
+  hosts: all
+  gather_facts: false
+  # tasks:
+  #   - name: "Include jpardinas.myrole"
+  #     ansible.builtin.include_role:
+  #       name: "jpardinas.myrole"
+  # roles:
+  #   - role: jpardinas.myrole
+  
+  tasks:
+    - apt: update_cache=yes
+    - name: "Include jpardinas.myrole"
+      ansible.builtin.include_role:
+        name: "jpardinas.myrole"

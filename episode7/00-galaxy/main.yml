@@ -1,0 +1,13 @@
+---
+# Run with ansible-playbook main.yml -K
+- hosts: localhost
+  connection: local
+
+  vars:
+    homebrew_installed_packages:
+      - pv
+
+  roles:
+    - elliotweiser.osx-command-line-tools
+    - role: geerlinguy.homebrew
+      become: true
