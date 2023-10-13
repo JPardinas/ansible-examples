@@ -28,10 +28,14 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install molecule[docker] yamllint ansible-lint
+          pip install molecule docker yamllint ansible-lint
         working-directory: ./episode8/01-molecule-playbook
 
       - name: Run Molecule tests
         run: |
           molecule test --all
         working-directory: ./episode8/01-molecule-playbook
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+          MOLECULE_DISTRO: ${{ matrix.distro }}
