@@ -28,12 +28,12 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install molecule molecule-plugins[docker] docker yamllint ansible-lint
-        working-directory: ./episode8/01-molecule-playbook
+          pip install molecule==5.1.0 molecule-plugins[docker] docker yamllint ansible-lint
+        working-directory: ${{ github.workspace }}/episode8/01-molecule-playbook
 
       - name: Run Molecule tests
         run: molecule test
-        working-directory: ./episode8/01-molecule-playbook
+        working-directory: ${{ github.workspace }}/episode8/01-molecule-playbook
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
