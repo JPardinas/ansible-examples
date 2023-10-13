@@ -31,7 +31,7 @@ jobs:
           pip install molecule==5.1.0 molecule-plugins[docker] docker yamllint ansible-lint
         working-directory: ${{ github.workspace }}/episode8/01-molecule-playbook
 
-      - name: Run Molecule tests
+      - name: Run Molecule tests on ${{ github.workspace }}/episode8/01-molecule-playbook
         run: molecule test
         working-directory: ${{ github.workspace }}/episode8/01-molecule-playbook
         env:
