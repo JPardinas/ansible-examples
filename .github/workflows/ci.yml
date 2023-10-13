@@ -34,6 +34,8 @@ jobs:
       - name: Run Molecule tests on ${{ github.workspace }}/episode8/01-molecule-playbook
         run: |
           echo "Repository directory: ${{ github.workspace }}"
+          ls -la ${{ github.workspace }}/episode8/01-molecule-playbook
+          cat ${{ github.workspace }}/episode8/01-molecule-playbook/main.yml
           molecule test
         working-directory: ${{ github.workspace }}/episode8/01-molecule-playbook
         env:
