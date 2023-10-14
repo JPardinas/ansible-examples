@@ -1,0 +1,109 @@
+---
+- hosts: centos
+  become: true
+
+  handlers:
+    - name: restart sshd
+      service:
+        name: sshd
+        state: restarted
+  
+  tasks:
+    - name: Tell SELinux about SSH's new port
+      seport:
+        ports: 2849
+        proto: tcp
+        setype: ssh_port_t
+        state: present
+      tags: [selinux]
+
+    - name: Make sure SSH is more secure.
+      lineinfile: # Can use template instead
+        path: /etc/ssh/sshd_config
+        state: present
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        validate: 'sshd -t -f %s'
+      with_items:
+        - regexp: '^#?Port'
+          line: 'Port 2849'
+        - regexp: '^#?PermitRootLogin'
+          line: 'PermitRootLogin no'
+        - regexp: '^#?PasswordAuthentication'
+          line: 'PasswordAuthentication no'
+      notify: restart sshd
+
+    - name: Add user johndoe.
+      user:
+        name: johndoe
+      tags: [users]
+
+    - name: Add sudo group rights for deployment user
+      lineinfile:
+        path: /etc/sudoers
+        regexp: '^johndoe'
+        line: 'johndoe ALL=(ALL) NOPASSWD: ALL'
+        state: present
+        validate: 'visudo -cf %s'
+      tags: [users]
+
+    - name: Remove unused packages.
+      package:
+        name:
+          - httpd
+          - nano
+          - mailutils
+        state: absent
+        purge: yes
+      tags: [packages]
+
+    - name: Edit file permissions.
+      file:
+        path: /etc/ssh/sshd_config
+        owner: root
+        group: root
+        mode: 0600
+    
+    # Set up on a separate playbook
+    # - name: Make sure everything is up to date.
+    #   yum:
+    #     name: '*'
+    #     state: latest
+    #   tags: [packages]
+
+    - name: Set up autoupdates.
+      yum:
+        name:
+          - yum-cron # dnf-automatic on Fedora
+          - yum-plugin-security
+        state: present
+      tags: [packages]
+
+    - name: Ensure auto updates are running.
+      service:
+        name: yum-cron
+        state: started
+        enabled: yes
+      tags: [packages]
+
+    - name: Install firewalld
+      package:
+        name: firewalld
+        state: present
+
+    - name: Configure ports in firewall
+      firewalld:
+        state: "{{ item.state }}"
+        port: "{{ item.port }}"
+        zone: external
+        permanent: yes
+        immediate: yes
+      with_items:
+        - { port: 2849/tcp, state: enabled }
+        - { port: 123/udp, state: enabled }
+
+    - name: Ensure firewalld is running.
+      service:
+        name: firewalld
+        state: started
+        enabled: yes
